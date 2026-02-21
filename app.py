@@ -54,6 +54,37 @@ async def analyze(request: Request):
         "box": {"x": x, "y": y, "w": w, "h": h}
     }
 
+# ============================================================
+# ANDROID API ENDPOINT
+# The Android app runs the TFLite model locally on-device,
+# detects the emotion, and sends only the emotion name + GPS.
+# This endpoint handles weather lookup + song recommendation.
+# ============================================================
+@app.get("/recommend")
+async def recommend(emotion: str, lat: str = "18.5204", lng: str = "73.8567"):
+    emotion = emotion.lower()
+    valid_emotions = ['neutral', 'happiness', 'surprise', 'sadness', 'anger', 'disgust', 'fear', 'contempt']
+    if emotion not in valid_emotions:
+        return {"error": f"Invalid emotion. Must be one of: {valid_emotions}"}
+
+    weather = engine.get_weather(lat, lng)
+    song_name, details = engine.get_recommendation(emotion, weather)
+    spotify_url = engine.search_spotify(song_name)
+
+    return {
+        "emotion": emotion.capitalize(),
+        "weather": weather.replace("-", " ").capitalize(),
+        "song": song_name,
+        "spotify_url": spotify_url,
+        "genre": details['genre'],
+        "mechanism": details['mechanism'],
+        "acoustic_strategy": details['acoustic_strategy']
+    }
+
+@app.get("/health")
+async def health():
+    return {"status": "ok", "model": "ferplus_model_pd_best.tflite"}
+
 if __name__ == "__main__":
     if not os.path.exists("templates"):
         os.makedirs("templates")
