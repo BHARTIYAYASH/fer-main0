@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moodify | Pure Harmony</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&family=Playfair+Display:ital,wght@1,500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #f7f3f0;
+            --accent-warm: #e6b2a0;
+            --text-main: #3d3b3a;
+            --glass: rgba(255, 255, 255, 0.4);
+        }
+
+        body {
+            background: var(--bg-color);
+            color: var(--text-main);
+            font-family: 'Outfit', sans-serif;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .ambient-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 10% 20%, rgba(230, 178, 160, 0.1) 0%, transparent 40%),
+                        radial-gradient(circle at 90% 80%, rgba(160, 190, 230, 0.1) 0%, transparent 40%);
+            z-index: -1;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            padding: 40px;
+            text-align: center;
+            animation: fadeIn 1.5s ease-out;
+        }
+
+        h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 4rem;
+            font-weight: 500;
+            margin-bottom: 10px;
+            letter-spacing: -1px;
+        }
+
+        p.subtitle {
+            font-style: italic;
+            opacity: 0.7;
+            margin-bottom: 50px;
+        }
+
+        .main-ui {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            align-items: center;
+        }
+
+        .video-box {
+            position: relative;
+            background: var(--glass);
+            padding: 10px;
+            border-radius: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.6);
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #video-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        video {
+            width: 100%;
+            border-radius: 20px;
+            transform: scaleX(-1);
+            display: block;
+        }
+
+        #face-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 5;
+            pointer-events: none;
+            transform: scaleX(-1);
+        }
+
+        .results-card {
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            padding: 40px;
+            border-radius: 30px;
+            text-align: left;
+            border: 1px solid rgba(255,255,255,0.6);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+            min-height: 300px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .tag {
+            display: inline-block;
+            background: white;
+            padding: 5px 15px;
+            border-radius: 100px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 15px;
+            color: var(--accent-warm);
+        }
+
+        .emotion-display {
+            font-size: 2.5rem;
+            font-weight: 600;
+            margin: 0;
+            background: linear-gradient(45deg, #3d3b3a, #e6b2a0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .weather-info {
+            font-size: 1.1rem;
+            margin: 10px 0 30px 0;
+            opacity: 0.6;
+        }
+
+        .song-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+        }
+
+        .btn-spotify {
+            background: #1DB954;
+            color: white;
+            padding: 15px 30px;
+            border-radius: 100px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 30px;
+            font-weight: 600;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .btn-spotify:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(29, 185, 84, 0.3);
+        }
+
+        .scan-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: rgba(230, 178, 160, 0.5);
+            animation: scanning 3s infinite linear;
+        }
+
+        @keyframes scanning {
+            0% { top: 0; }
+            100% { top: 100%; }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; filter: blur(20px); transform: translateY(20px); }
+            to { opacity: 1; filter: blur(0); transform: translateY(0); }
+        }
+
+        .loader {
+            display: none;
+            margin: 20px auto;
+            width: 50px;
+            height: 4px;
+            background: #eee;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .loader::after {
+            content: '';
+            display: block;
+            width: 30%;
+            height: 100%;
+            background: var(--accent-warm);
+            animation: loading 1.5s infinite;
+        }
+
+        @keyframes loading {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(333%); }
+        }
+    </style>
+</head>
+<body>
+    <div class="ambient-bg"></div>
+    
+    <div class="container">
+        <h1>Moodify</h1>
+        <p class="subtitle">Where your reflection meets its melody.</p>
+
+        <div class="main-ui">
+            <div class="video-box">
+                <div id="video-container">
+                    <video id="video" autoplay playsinline muted></video>
+                    <canvas id="face-canvas"></canvas>
+                </div>
+                <div class="scan-overlay"></div>
+            </div>
+
+            <div id="results" class="results-card">
+                <div id="welcome-msg">
+                    <p style="font-size: 1.2rem; line-height: 1.6;">Welcome. Looking into the camera allows us to understand your current state and suggest the harmonic balance you need.</p>
+                    <button onclick="startAnalysis()" style="background: var(--text-main); color: white; border: none; padding: 15px 40px; border-radius: 100px; cursor: pointer; font-family: inherit; font-size: 1rem;">Begin Experience</button>
+                </div>
+
+                <div id="output" style="display: none;">
+                    <div class="tag" id="tag-emotion">Detecting...</div>
+                    <p class="emotion-display" id="res-emotion">Analyzing Face...</p>
+                    <p class="weather-info" id="res-weather">Loading Weather...</p>
+                    
+                    <div style="margin-top: 40px; border-top: 1px solid rgba(0,0,0,0.05); padding-top: 30px;">
+                        <p class="song-title" id="res-song">Suggesting Song</p>
+                        <p style="font-size: 0.9rem; margin-bottom: 20px; opacity: 0.8;" id="res-mechanism"></p>
+                        <a href="#" target="_blank" class="btn-spotify" id="res-link">
+                            Listen on Spotify
+                        </a>
+                    </div>
+                </div>
+                <div class="loader" id="loader"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('face-canvas');
+        const ctx = canvas.getContext('2d');
+        const results = document.getElementById('output');
+        const welcome = document.getElementById('welcome-msg');
+        const loader = document.getElementById('loader');
+
+        async function initCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                video.srcObject = stream;
+                
+                // Set canvas size to match video after it loads
+                video.onloadedmetadata = () => {
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                };
+            } catch (err) {
+                console.error("Camera error:", err);
+                alert("Camera access is required for Moodify.");
+            }
+        }
+
+        async function startAnalysis() {
+            welcome.style.display = 'none';
+            results.style.display = 'block';
+            
+            // Analysis interval: 3 seconds
+            setInterval(captureAndAnalyze, 3000);
+            captureAndAnalyze();
+        }
+
+        function drawFaceBox(box) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            if (!box) return;
+
+            ctx.strokeStyle = '#e6b2a0';
+            ctx.lineWidth = 4;
+            ctx.lineJoin = 'round';
+            ctx.strokeRect(box.x, box.y, box.w, box.h);
+            
+            // Subtle glow
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = '#e6b2a0';
+            ctx.strokeRect(box.x, box.y, box.w, box.h);
+            ctx.shadowBlur = 0;
+        }
+
+        async function captureAndAnalyze() {
+            loader.style.display = 'block';
+            
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = video.videoWidth;
+            tempCanvas.height = video.videoHeight;
+            tempCanvas.getContext('2d').drawImage(video, 0, 0);
+            const dataUrl = tempCanvas.toDataURL('image/jpeg', 0.8);
+
+            try {
+                const response = await fetch('/analyze', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ image: dataUrl })
+                });
+                
+                const data = await response.json();
+                
+                if (data.error) {
+                    drawFaceBox(null);
+                    return;
+                }
+
+                drawFaceBox(data.box);
+
+                document.getElementById('res-emotion').innerText = data.emotion;
+                document.getElementById('res-weather').innerText = `Current Atmosphere: ${data.weather}`;
+                document.getElementById('res-song').innerText = data.song;
+                document.getElementById('res-mechanism').innerText = data.mechanism;
+                document.getElementById('res-link').href = data.spotify_url;
+                document.getElementById('tag-emotion').innerText = data.genre;
+                
+            } catch (err) {
+                console.error("Analysis failed:", err);
+            } finally {
+                loader.style.display = 'none';
+            }
+        }
+
+        initCamera();
+    </script>
+</body>
+</html>
