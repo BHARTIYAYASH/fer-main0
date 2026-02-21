@@ -4,4 +4,10 @@ pandas
 matplotlib
 seaborn
 ipykernel
-opencv-python
+opencv-python-headless
+fastapi
+uvicorn
+requests
+python-dotenv
+jinja2
+python-multipart
